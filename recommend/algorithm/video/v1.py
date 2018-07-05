@@ -31,6 +31,8 @@ def get_video_tag(video_id):
             w = word.lower()
             if w in stop_words_set:
                 continue
+            if w.startswith('('):
+                continue
             tags.add(w)
     return view_count, tags
 

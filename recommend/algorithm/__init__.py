@@ -111,5 +111,6 @@ stop_words_set = {
     "you'll", "you're", "you've", "your", "yours",
     "yourself", "yourselves", "zero",
 
-    "video", "videos", "title", "latest", "download", "ki"
+    "video", "videos", "title", "latest", "download", "ki",
+    "full", "year", "week", "film", "tape", "tapes", "tv", "movies", "movie",
 }
