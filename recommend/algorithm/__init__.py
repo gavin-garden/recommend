@@ -110,4 +110,6 @@ stop_words_set = {
     "wouldn't", "yes", "yet", "you", "you'd",
     "you'll", "you're", "you've", "your", "yours",
     "yourself", "yourselves", "zero",
+
+    "video", "videos", "title", "latest", "download", "ki"
 }

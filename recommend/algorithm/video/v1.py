@@ -26,7 +26,7 @@ def get_video_tag(video_id):
 
     tags = set()
     for item in video_tag:
-        words = item.split('')
+        words = item.split()
         for word in words:
             w = word.lower()
             if w in stop_words_set:
