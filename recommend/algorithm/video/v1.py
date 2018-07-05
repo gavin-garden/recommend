@@ -47,7 +47,7 @@ def query_video_by_tag(tags):
         return
 
     query = {
-        'size': 200,
+        'size': 100,
         'query': {
             'bool': {
                 'must': [
@@ -60,7 +60,8 @@ def query_video_by_tag(tags):
                 ]
             }
         },
-        '_source': ['hot']
+        '_source': ['hot'],
+        'min_score': 40.0
     }
     query_result = es_client.search(video_index, video_type, body=query)
     hits = query_result['hits']['hits']
