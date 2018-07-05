@@ -1,0 +1,36 @@
+version: 1
+disable_existing_loggers: no
+
+formatters:
+  simple:
+    format: '%(asctime)s\t%(message)s'
+  detail:
+    format: '%(asctime)s [%(process)d] [%(levelname)s] : %(message)s'
+
+handlers:
+  console:
+    class: logging.StreamHandler
+    level: INFO
+    formatter: detail
+    stream: ext://sys.stdout
+  file:
+    class: logging.handlers.WatchedFileHandler
+    level: INFO
+    formatter: detail
+    filename: /data/logs/recommend/info.log
+
+loggers:
+  recommend.console:
+    level: DEBUG
+    handlers: [console]
+    propagate: no
+    qualname: recommend.console
+  recommend.file:
+    level: INFO
+    handlers: [file]
+    propagate: no
+    qualname: recommend.file
+
+root:
+  level: INFO
+  handlers: [console]
