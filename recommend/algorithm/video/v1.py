@@ -31,9 +31,10 @@ def get_video_tag(video_id):
             w = word.lower()
             if w in stop_words_set:
                 continue
-            if w.startswith('('):
+            if len(w) < 3:
                 continue
-            tags.add(w)
+            if w.isalpha():
+                tags.add(w)
     return view_count, tags
 
 
@@ -61,7 +62,7 @@ def query_video_by_tag(tags):
             }
         },
         '_source': ['hot'],
-        'min_score': 40.0
+        'min_score': 20.0
     }
     query_result = es_client.search(video_index, video_type, body=query)
     hits = query_result['hits']['hits']
