@@ -113,5 +113,5 @@ stop_words_set = {
 
     "video", "videos", "title", "latest", "download", "ki",
     "full", "year", "week", "film", "tape", "tapes",
-    "hq", "hd", "epic", "part",
+    "hq", "hd", "epic", "part", "singer", "top"
 }
