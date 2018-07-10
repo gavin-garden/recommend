@@ -25,6 +25,7 @@ class VideoAlgorithmV1(object):
 
     def __init__(self):
         self.hot_videos = {}
+        self._load_hot_videos()
 
     def _load_hot_videos(self):
         """加载热门视频"""
