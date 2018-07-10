@@ -35,8 +35,9 @@ def video_guess_like(args):
     if video_map:
         video_ids = list(video_map.keys())
     else:
-        video_ids = random.sample(v1.algorithm.hot_videos.keys(), size)
+        video_ids = random.sample(v1.algorithm.hot_videos.keys(), size + 1)
 
+    video_ids.remove(video_id)
     videos = get_videos(video_ids)
     return jsonify({
         "ret": ReturnCode.success,

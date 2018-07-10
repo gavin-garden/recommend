@@ -246,7 +246,7 @@ stop_words_set = {
     "video", "videos", "title", "latest", "download", "ki",
     "full", "year", "week", "film", "tape", "tapes",
     "hq", "hd", "epic", "part", "singer", "top", "lyrics"
-    "records", "trailer", "audio",
+    "records", "trailer", "audio", "lyric"
 }
 
 
@@ -268,6 +268,7 @@ def get_videos(video_ids):
         source = item.get('_source', {})
         if not source:
             continue
+        source.pop('tag', None)
         source['poster'] = source['poster'].replace('maxresdefalut', 'mqdefault')
         result[item['_id']] = source
     return result

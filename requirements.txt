@@ -6,3 +6,5 @@ Flask==1.0.2
 prometheus-client==0.2.0
 celery==4.1.0
 kombu==4.1.0
+webargs==3.0.2
+youtube-dl==2018.7.10
