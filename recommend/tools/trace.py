@@ -2,6 +2,7 @@
 """中间件"""
 import os
 import time
+import logging
 
 import requests
 from flask import (
@@ -14,7 +15,8 @@ from prometheus_client import (
     generate_latest,
 )
 from werkzeug.contrib.fixers import ProxyFix
-from recommend import logger
+
+logger = logging.getLogger('recommend.console')
 
 
 class MonitorMiddleware(object):

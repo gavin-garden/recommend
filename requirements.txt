@@ -2,3 +2,7 @@ certifi==2018.1.18
 elasticsearch==6.2.0
 PyYAML==3.12
 redis==2.10.6
+Flask==1.0.2
+prometheus-client==0.2.0
+celery==4.1.0
+kombu==4.1.0
