@@ -1,4 +1,136 @@
 # -*- coding: utf8 -*-
+from youtube_dl import (
+    DateRange,
+    YoutubeDL,
+)
+from recommend import es_client
+from recommend.const import (
+    video_index,
+    video_type,
+)
+
+
+ydl_opts = {
+    'usenetrc': False,
+    'username': None,
+    'password': None,
+    'twofactor': None,
+    'videopassword': None,
+    'ap_mso': None,
+    'ap_username': None,
+    'ap_password': None,
+    'quiet': True,
+    'no_warnings': False,
+    'forceurl': False,
+    'forcetitle': False,
+    'forceid': False,
+    'forcethumbnail': False,
+    'forcedescription': False,
+    'forceduration': False,
+    'forcefilename': False,
+    'forceformat': False,
+    'forcejson': False,
+    'dump_single_json': False,
+    'simulate': False,
+    'skip_download': True,
+    'format': None,
+    'listformats': None,
+    'outtmpl': '%(title)s-%(id)s.%(ext)s',
+    'autonumber_size': None,
+    'autonumber_start': 1,
+    'restrictfilenames': False,
+    'ignoreerrors': False,
+    'force_generic_extractor': False,
+    'ratelimit': None,
+    'nooverwrites': False,
+    'retries': 10,
+    'fragment_retries': 10,
+    'skip_unavailable_fragments': True,
+    'keep_fragments': False,
+    'buffersize': 1024,
+    'noresizebuffer': False,
+    'http_chunk_size': None,
+    'continuedl': True,
+    'noprogress': False,
+    'progress_with_newline': False,
+    'playliststart': 1,
+    'playlistend': None,
+    'playlistreverse': None,
+    'playlistrandom': None,
+    'noplaylist': False,
+    'logtostderr': False,
+    'consoletitle': False,
+    'nopart': False,
+    'updatetime': True,
+    'writedescription': False,
+    'writeannotations': False,
+    'writeinfojson': False,
+    'writethumbnail': False,
+    'write_all_thumbnails': False,
+    'writesubtitles': False,
+    'writeautomaticsub': False,
+    'allsubtitles': False,
+    'listsubtitles': False,
+    'subtitlesformat': 'best',
+    'subtitleslangs': [],
+    'matchtitle': None,
+    'rejecttitle': None,
+    'max_downloads': None,
+    'prefer_free_formats': False,
+    'verbose': False,
+    'dump_intermediate_pages': False,
+    'write_pages': False,
+    'test': False,
+    'keepvideo': False,
+    'min_filesize': None,
+    'max_filesize': None,
+    'min_views': None,
+    'max_views': None,
+    'daterange': DateRange(),
+    'cachedir': None,
+    'youtube_print_sig_code': False,
+    'age_limit': None,
+    'download_archive': None,
+    'cookiefile': None,
+    'nocheckcertificate': False,
+    'prefer_insecure': None,
+    'proxy': None,
+    'socket_timeout': None,
+    'bidi_workaround': None,
+    'debug_printtraffic': False,
+    'prefer_ffmpeg': None,
+    'include_ads': None,
+    'default_search': None,
+    'youtube_include_dash_manifest': True,
+    'encoding': None,
+    'extract_flat': False,
+    'mark_watched': False,
+    'merge_output_format': None,
+    'postprocessors': [],
+    'fixup': 'detect_or_warn',
+    'source_address': None,
+    'call_home': False,
+    'sleep_interval': None,
+    'max_sleep_interval': None,
+    'external_downloader': None,
+    'list_thumbnails': False,
+    'playlist_items': None,
+    'xattr_set_filesize': None,
+    'match_filter': None,
+    'no_color': False,
+    'ffmpeg_location': None,
+    'hls_prefer_native': None,
+    'hls_use_mpegts': None,
+    'external_downloader_args': None,
+    'postprocessor_args': None,
+    'cn_verification_proxy': None,
+    'geo_verification_proxy': None,
+    'config_location': None,
+    'geo_bypass': True,
+    'geo_bypass_country': None,
+    'autonumber': None,
+    'usetitle': None
+}
 
 stop_words_set = {
     "a", "able", "about", "above", "according",
@@ -116,3 +248,64 @@ stop_words_set = {
     "hq", "hd", "epic", "part", "singer", "top", "lyrics"
     "records", "trailer", "audio",
 }
+
+
+def get_videos(video_ids):
+    """批量查询视频id
+
+    Args:
+        video_ids (list): 视频id列表
+    """
+    if not video_ids:
+        return
+
+    query = {'docs': [{'_index': video_index, '_type': video_type, '_id': x} for x in video_ids]}
+    query_result = es_client.mget(query)
+    docs = query_result['docs']
+
+    result = {}
+    for item in docs:
+        source = item.get('_source', {})
+        if not source:
+            continue
+        source['poster'] = source['poster'].replace('maxresdefalut', 'mqdefault')
+        result[item['_id']] = source
+    return result
+
+
+def extract_youtube_info(url):
+    """解析youtube详情页
+
+    Args:
+        url (str): 视频播放页
+    """
+    with YoutubeDL(ydl_opts) as ydl:
+        return ydl.extract_info(url)
+
+
+def get_video(video_id):
+    """查询youtube视频详情
+    如果视频不存在es中,需要爬一次
+
+    Args:
+        video_id (str): 视频id
+    """
+    if es_client.exists(video_index, video_type, video_id):
+        video = es_client.get(video_index, video_type, id=video_id)
+        return video['_source']
+
+    play_url = 'https://youtube.com/watch?v={}'.format(video_id)
+    data = extract_youtube_info(play_url)
+    body = {
+        'id': data['id'],
+        'type': 'mv',
+        'slate': play_url,
+        'poster': data['thumbnail'],
+        'runtime': data['duration'],
+        'hot': data['view_count'],
+        'genre': ['youtube'],
+        'title': data['title'],
+        'tag': data['tags']
+    }
+    es_client.index(video_index, video_type, body, id=video_id)
+    return body

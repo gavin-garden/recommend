@@ -15,7 +15,10 @@ from recommend.const import (
     video_type,
     hot_video_key,
 )
-from recommend.algorithm.video import stop_words_set
+from recommend.algorithm.video import (
+    stop_words_set,
+    get_video,
+)
 
 
 class VideoAlgorithmV1(object):
@@ -28,6 +31,8 @@ class VideoAlgorithmV1(object):
         if redis_client.exists(hot_video_key):
             videos = redis_client.zrangebyscore(
                 hot_video_key, '-inf', '+inf', withscores=True)
+            for key, value in videos:
+                self.hot_videos[key.decode('utf8')] = value
         else:
             self.hot_videos.update(self._get_hot_videos(size=700))
             self.hot_videos.update(self._get_hot_videos(tag='india', size=200))
@@ -82,10 +87,8 @@ class VideoAlgorithmV1(object):
         Args:
             video_id (str): 视频id
         """
-        video = es_client.get(video_index, video_type, id=video_id)
-        source = video['_source']
+        source = get_video(video_id)
         video_tag = source.get('tag', [])
-        view_count = source.get('hot', 0)
 
         tags = set()
         for item in video_tag:
@@ -98,7 +101,7 @@ class VideoAlgorithmV1(object):
                     continue
                 if w.isalpha():
                     tags.add(w)
-        return view_count, tags
+        return tags
 
     @staticmethod
     def query_videos_by_tag(tags, size=100):
@@ -137,3 +140,6 @@ class VideoAlgorithmV1(object):
             score_ = item['_score']
             video_map[id_] = score_
         return video_map
+
+
+algorithm = VideoAlgorithmV1()
