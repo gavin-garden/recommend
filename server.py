@@ -31,13 +31,16 @@ def video_guess_like(args):
 
     video_map = None
     if tags:
-        video_map = v1.algorithm.query_videos_by_tag(tags, size)
+        video_map = v1.algorithm.query_videos_by_tag(tags, size + 1)
     if video_map:
         video_ids = list(video_map.keys())
     else:
         video_ids = random.sample(v1.algorithm.hot_videos.keys(), size + 1)
 
-    video_ids.remove(video_id)
+    if video_id in video_ids:
+        video_ids.remove(video_id)
+    else:
+        video_ids = video_ids[:-1]
     videos = get_videos(video_ids)
     return jsonify({
         "ret": ReturnCode.success,
