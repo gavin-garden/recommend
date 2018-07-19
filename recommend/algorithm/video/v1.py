@@ -6,7 +6,7 @@ youtube 视频第一版推荐算法
 排序环境通过视频播放量进行排序
 """
 from math import log10
-from recommend import (
+from recommend.models import (
     es_client,
     redis_client,
 )

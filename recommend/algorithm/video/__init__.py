@@ -3,11 +3,11 @@ from youtube_dl import (
     DateRange,
     YoutubeDL,
 )
-from recommend import es_client
 from recommend.const import (
     video_index,
     video_type,
 )
+from recommend.models import es_client
 
 
 ydl_opts = {
@@ -269,7 +269,7 @@ def get_videos(video_ids):
         if not source:
             continue
         source.pop('tag', None)
-        source['poster'] = source['poster'].replace('maxresdefalut', 'mqdefault')
+        source['poster'] = source['poster'].replace('maxresdefalut', 'hqdefault')
         result[item['_id']] = source
     return result
 
@@ -300,6 +300,7 @@ def get_video(video_id):
     body = {
         'id': data['id'],
         'type': 'mv',
+        'p_type': 'video',
         'slate': play_url,
         'poster': data['thumbnail'],
         'runtime': data['duration'],

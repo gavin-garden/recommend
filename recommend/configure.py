@@ -3,3 +3,4 @@
 
 REDIS_URL = 'xxxxx'
 ES_HOSTS = ['xxxxxx']
+MYSQL_URL = 'xxxxxx'

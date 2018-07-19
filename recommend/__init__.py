@@ -4,27 +4,18 @@ import time
 import yaml
 import logging.config
 
-from redis import StrictRedis
-from elasticsearch import Elasticsearch
 from flask import (
     Flask,
     g,
     jsonify
 )
 from celery import Celery
-from recommend.configure import (
-    REDIS_URL,
-    ES_HOSTS,
-)
 from recommend.tools.trace import MonitorMiddleware
 
 current_dir = os.path.dirname(__file__)
 logging_path = os.path.join(current_dir, 'logging.yaml')
 with open(logging_path, 'r') as f:
     logging.config.dictConfig(yaml.load(f))
-
-redis_client = StrictRedis.from_url(REDIS_URL)
-es_client = Elasticsearch(ES_HOSTS)
 
 celery_app = Celery("recommend")
 celery_app.config_from_object("recommend.celeryconfig")
