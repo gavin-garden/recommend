@@ -298,7 +298,7 @@ def get_video(video_id):
     play_url = 'https://youtube.com/watch?v={}'.format(video_id)
     data = extract_youtube_info(play_url)
     body = {
-        'id': data['id'],
+        'id': video_id,
         'type': 'mv',
         'p_type': 'video',
         'slate': play_url,

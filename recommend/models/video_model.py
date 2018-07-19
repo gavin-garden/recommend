@@ -42,6 +42,8 @@ class VideoBehavior(BaseModel):
         session = DBSession()
         records = session.query(cls).\
             filter(cls.device == device).\
-            filter(cls.created_at > begin).all()
+            filter(cls.created_at > begin).\
+            order_by(cls.created_at.desc()).\
+            limit(100).all()
         session.commit()
         return records

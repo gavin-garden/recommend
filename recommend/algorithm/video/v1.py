@@ -5,20 +5,32 @@ youtube 视频第一版推荐算法
 召回环节通过比较标签相似度以及热门视频
 排序环境通过视频播放量进行排序
 """
+import random
 from math import log10
 from recommend.models import (
     es_client,
     redis_client,
+    video_model,
 )
 from recommend.const import (
     video_index,
     video_type,
     hot_video_key,
+    Operation,
 )
 from recommend.algorithm.video import (
     stop_words_set,
     get_video,
+    get_videos,
 )
+
+
+video_operation_score = {
+    Operation.watch: 0.1,
+    Operation.collect: 0.2,
+    Operation.share: 0.3,
+    Operation.star: 0.2,
+}
 
 
 class VideoAlgorithmV1(object):
@@ -82,7 +94,7 @@ class VideoAlgorithmV1(object):
         return video_map
 
     @staticmethod
-    def get_video_tag(video_id):
+    def _get_video_tag(video_id):
         """从es中找到视频, 并计算视频的标签向量
 
         Args:
@@ -105,7 +117,7 @@ class VideoAlgorithmV1(object):
         return tags
 
     @staticmethod
-    def query_videos_by_tag(tags, size=100):
+    def _query_videos_by_tag(tags, size=100):
         """根据标签在es中查询视频
 
         Args:
@@ -141,6 +153,102 @@ class VideoAlgorithmV1(object):
             score_ = item['_score']
             video_map[id_] = score_
         return video_map
+
+    def get_similar_videos(self, video_id, size=10):
+        """根据标签获取相似的视频(如果没有,则返回热门视频)
+
+        Args:
+            video_id (str): 视频id
+            size (int): 数量
+        """
+        # todo add dogpile cache
+        try:
+            tags = self._get_video_tag(video_id)
+        except:
+            # 从youtube爬到视频信息出异常
+            tags = None
+
+        video_map = None
+        if tags:
+            video_map = self._query_videos_by_tag(tags, size)
+        if video_map:
+            video_ids = list(video_map.keys())
+        else:
+            video_ids = random.sample(self.hot_videos.keys(), size)
+
+        if video_id in video_ids:
+            video_ids.remove(video_id)
+        videos = get_videos(video_ids)
+        return videos
+
+    def update_recommend_list(self, device, video, operation):
+        """针对用户操作视频的行为更新推荐列表
+
+        Args:
+            device (str): 设备id
+            video (str): 视频id
+            operation (int): 操作类型
+        """
+        device_key = 'device|{}|recommend'.format(device)
+        recommend_list = redis_client.zrangebyscore(
+            device_key, '-inf', '+inf', withscores=True)
+        if not recommend_list:
+            return
+
+        try:
+            tags = self._get_video_tag(video)
+        except:
+            tags = None
+        # 视频没有标签 不推荐数据
+        if not tags:
+            return
+
+        video_map = self._query_videos_by_tag(tags, 100)
+        if not video_map:
+            return
+
+        video_records = video_model.VideoBehavior.query_by_device(device)
+        recent_videos = {x.video for x in video_records}
+        recent_videos.add(video)
+
+        zset_args = []
+        for key, value in recommend_list:
+            video_id = key.decode('utf8')
+            if video_id in video_map:
+                value += video_operation_score[operation] * log10(video_map[video_id])
+            zset_args.append(value)
+            zset_args.append(video_id)
+
+        redis_client.delete(device_key)
+        redis_client.zadd(device_key, *zset_args)
+
+    def get_recommend_videos(self, device, size):
+        """获取推荐视频数据
+
+        Args:
+            device (str): 设备id
+            size (int): 个数
+        """
+        device_key = 'device|{}|recommend'.format(device)
+        recommend_list = redis_client.zrange(device_key, 0, size, desc=True)
+
+        # 推荐列表为空
+        if not recommend_list:
+            is_new = True
+            video_ids = random.sample(self.hot_videos.keys(), size + 500)
+            recommend_videos = video_ids[:size]
+            zset_args = []
+            for video in video_ids[size:]:
+                zset_args.append(1.0)
+                zset_args.append(video)
+            redis_client.zadd(device_key, *zset_args)
+        else:
+            is_new = False
+            recommend_videos = recommend_list
+            redis_client.zrem(device_key, *recommend_videos)
+
+        videos = get_videos(recommend_videos)
+        return videos, is_new
 
 
 algorithm = VideoAlgorithmV1()

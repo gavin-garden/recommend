@@ -1,7 +1,5 @@
 # -*- coding: utf8 -*-
 """用户接口"""
-import random
-import ujson
 from flask import jsonify
 from webargs import fields
 
@@ -11,11 +9,7 @@ from recommend import (
 )
 from recommend.const import ReturnCode
 from recommend.tools.args import parser
-from recommend.models import redis_client
-from recommend.algorithm.video import (
-    v1,
-    get_videos,
-)
+from recommend.algorithm.video.v1 import algorithm
 
 
 @flask_app.route('/recommend/video/guess-like', methods=['GET'])
@@ -24,36 +18,7 @@ from recommend.algorithm.video import (
 })
 def video_guess_like(args):
     video_id = args['id']
-
-    redis_key = 'video|{}'.format(video_id)
-    cache = redis_client.get(redis_key)
-    if cache:
-        return jsonify({
-            "ret": ReturnCode.success,
-            "msg": "ok",
-            "data": ujson.loads(cache),
-        })
-
-    try:
-        tags = v1.algorithm.get_video_tag(video_id)
-    except:
-        # 从youtube爬到视频信息出异常
-        tags = None
-
-    video_map = None
-    if tags:
-        video_map = v1.algorithm.query_videos_by_tag(tags, 11)
-    if video_map:
-        video_ids = list(video_map.keys())
-    else:
-        video_ids = random.sample(v1.algorithm.hot_videos.keys(), 11)
-
-    if video_id in video_ids:
-        video_ids.remove(video_id)
-    else:
-        video_ids = video_ids[:-1]
-    videos = get_videos(video_ids)
-    redis_client.set(redis_key, ujson.dumps(videos), ex=3600)
+    videos = algorithm.get_similar_videos(video_id)
     return jsonify({
         "ret": ReturnCode.success,
         "msg": "ok",
