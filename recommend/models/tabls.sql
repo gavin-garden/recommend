@@ -1,3 +1,5 @@
+CREATE SCHEMA `recommend` DEFAULT CHARACTER SET utf8mb4;
+
 CREATE TABLE `video_behavior` (
   `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键id',
   `device` VARCHAR(32) NOT NULL COMMENT '用户设备id',

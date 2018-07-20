@@ -40,4 +40,4 @@ cache_region = make_region().configure(
     },
     expiration_time=300,
 )
-redis_client = cache_region.actual_backend
+redis_client = cache_region.actual_backend.client
