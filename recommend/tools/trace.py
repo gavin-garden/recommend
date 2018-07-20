@@ -16,7 +16,7 @@ from prometheus_client import (
 )
 from werkzeug.contrib.fixers import ProxyFix
 
-logger = logging.getLogger('recommend.console')
+logger = logging.getLogger('recommend.file')
 
 
 class MonitorMiddleware(object):
