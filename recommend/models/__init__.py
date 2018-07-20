@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """数据库连接"""
 from redis import StrictRedis
+from dogpile.cache import make_region
 from elasticsearch import Elasticsearch
 from sqlalchemy import event
 from sqlalchemy.orm import sessionmaker
@@ -11,6 +12,7 @@ from recommend.configure import (
     MYSQL_URL,
     REDIS_URL,
     ES_HOSTS,
+    CACHE_ARGUMENTS,
 )
 
 
@@ -33,3 +35,9 @@ DBSession = sessionmaker(bind=db_engine, expire_on_commit=False)
 
 redis_client = StrictRedis.from_url(REDIS_URL)
 es_client = Elasticsearch(ES_HOSTS)
+
+cache_region = make_region().configure(
+    'dogpile.cache.redis',
+    arguments=CACHE_ARGUMENTS,
+    expiration_time=300,
+)

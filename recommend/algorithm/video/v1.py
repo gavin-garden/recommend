@@ -5,12 +5,14 @@ youtube 视频第一版推荐算法
 召回环节通过比较标签相似度以及热门视频
 排序环境通过视频播放量进行排序
 """
+import operator
 import random
 from math import log10
 from recommend.models import (
     es_client,
     redis_client,
     video_model,
+    cache_region,
 )
 from recommend.const import (
     video_index,
@@ -154,6 +156,7 @@ class VideoAlgorithmV1(object):
             video_map[id_] = score_
         return video_map
 
+    @cache_region.cache_on_arguments(expiration_time=3600)
     def get_similar_videos(self, video_id, size=10):
         """根据标签获取相似的视频(如果没有,则返回热门视频)
 
@@ -161,7 +164,6 @@ class VideoAlgorithmV1(object):
             video_id (str): 视频id
             size (int): 数量
         """
-        # todo add dogpile cache
         try:
             tags = self._get_video_tag(video_id)
         except:
@@ -194,6 +196,7 @@ class VideoAlgorithmV1(object):
             device_key, '-inf', '+inf', withscores=True)
         if not recommend_list:
             return
+        recommend_map = {key.decode('uft8'): value for key, value in recommend_list}
 
         try:
             tags = self._get_video_tag(video)
@@ -211,13 +214,25 @@ class VideoAlgorithmV1(object):
         recent_videos = {x.video for x in video_records}
         recent_videos.add(video)
 
+        for key, value in video_map.items():
+            if key in recommend_map:
+                recommend_map[key] += video_operation_score[operation] * log10(value)
+            else:
+                recommend_map[key] = value
+
+        recommend_list = sorted(recommend_map, operator.itemgetter(1), reverse=True)
+        count = 0
         zset_args = []
         for key, value in recommend_list:
-            video_id = key.decode('utf8')
-            if video_id in video_map:
-                value += video_operation_score[operation] * log10(video_map[video_id])
+            if count > 1000:
+                break
+
+            if key in recent_videos:
+                continue
+
             zset_args.append(value)
-            zset_args.append(video_id)
+            zset_args.append(key)
+            count += 1
 
         redis_client.delete(device_key)
         redis_client.zadd(device_key, *zset_args)
@@ -234,7 +249,6 @@ class VideoAlgorithmV1(object):
 
         # 推荐列表为空
         if not recommend_list:
-            is_new = True
             video_ids = random.sample(self.hot_videos.keys(), size + 500)
             recommend_videos = video_ids[:size]
             zset_args = []
@@ -243,12 +257,11 @@ class VideoAlgorithmV1(object):
                 zset_args.append(video)
             redis_client.zadd(device_key, *zset_args)
         else:
-            is_new = False
             recommend_videos = recommend_list
             redis_client.zrem(device_key, *recommend_videos)
 
         videos = get_videos(recommend_videos)
-        return videos, is_new
+        return videos
 
 
 algorithm = VideoAlgorithmV1()
