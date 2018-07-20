@@ -51,9 +51,11 @@ def device_video_behavior(args):
 def device_video_recommend(args):
     device = args['device']
     size = args.get('size', 10)
+    videos = algorithm.get_recommend_videos(device, size)
     return jsonify({
         "ret": ReturnCode.success,
         "msg": "ok",
+        "data": videos,
     })
 
 if __name__ == '__main__':

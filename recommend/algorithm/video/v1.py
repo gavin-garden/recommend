@@ -180,8 +180,7 @@ class VideoAlgorithmV1(object):
 
         if video_id in video_ids:
             video_ids.remove(video_id)
-        videos = get_videos(video_ids)
-        return videos
+        return get_videos(video_ids)
 
     def update_recommend_list(self, device, video, operation):
         """针对用户操作视频的行为更新推荐列表
@@ -245,7 +244,8 @@ class VideoAlgorithmV1(object):
             size (int): 个数
         """
         device_key = 'device|{}|recommend'.format(device)
-        recommend_list = redis_client.zrange(device_key, 0, size, desc=True)
+        recommend_list = redis_client.zrange(device_key, 0, size - 1, desc=True)
+        recommend_list = [x.decode('utf8') for x in recommend_list]
 
         # 推荐列表为空
         if not recommend_list:
@@ -260,8 +260,7 @@ class VideoAlgorithmV1(object):
             recommend_videos = recommend_list
             redis_client.zrem(device_key, *recommend_videos)
 
-        videos = get_videos(recommend_videos)
-        return videos
+        return get_videos(recommend_videos)
 
 
 algorithm = VideoAlgorithmV1()

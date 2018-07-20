@@ -263,14 +263,15 @@ def get_videos(video_ids):
     query_result = es_client.mget(query)
     docs = query_result['docs']
 
-    result = {}
+    result = []
     for item in docs:
         source = item.get('_source', {})
         if not source:
             continue
         source.pop('tag', None)
+        source.pop('genre')
         source['poster'] = source['poster'].replace('maxresdefalut', 'hqdefault')
-        result[item['_id']] = source
+        result.append(source)
     return result
 
 
