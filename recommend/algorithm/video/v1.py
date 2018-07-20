@@ -5,7 +5,6 @@ youtube 视频第一版推荐算法
 召回环节通过比较标签相似度以及热门视频
 排序环境通过视频播放量进行排序
 """
-import operator
 import random
 from math import log10
 from recommend.models import (
@@ -195,7 +194,7 @@ class VideoAlgorithmV1(object):
             device_key, '-inf', '+inf', withscores=True)
         if not recommend_list:
             return
-        recommend_map = {key.decode('uft8'): value for key, value in recommend_list}
+        recommend_map = {key.decode('utf8'): value for key, value in recommend_list}
 
         try:
             tags = self._get_video_tag(video)
@@ -217,9 +216,9 @@ class VideoAlgorithmV1(object):
             if key in recommend_map:
                 recommend_map[key] += video_operation_score[operation] * log10(value)
             else:
-                recommend_map[key] = value
+                recommend_map[key] = log10(value)
 
-        recommend_list = sorted(recommend_map, operator.itemgetter(1), reverse=True)
+        recommend_list = sorted(recommend_map.items(), key=lambda kv: kv[1], reverse=True)
         count = 0
         zset_args = []
         for key, value in recommend_list:
