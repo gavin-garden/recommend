@@ -34,7 +34,7 @@ def video_guess_like(args):
 })
 def device_video_behavior(args):
     device = args['device']
-    video_id = args['id']
+    video_id = args['video_id']
     operation = args['operation']
     tasks.update_video_recommendation.delay(device, video_id, operation)
     return jsonify({
