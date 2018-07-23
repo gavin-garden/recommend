@@ -20,8 +20,8 @@ def video_guess_like(args):
     video_id = args['id']
     videos = algorithm.get_similar_videos(video_id)
     return jsonify({
-        "ret": ReturnCode.success,
-        "msg": "ok",
+        "code": ReturnCode.success,
+        "result": "ok",
         "data": videos,
     })
 
@@ -38,8 +38,8 @@ def device_video_behavior(args):
     operation = args['operation']
     tasks.update_video_recommendation.delay(device, video_id, operation)
     return jsonify({
-        "ret": ReturnCode.success,
-        "msg": "ok",
+        "code": ReturnCode.success,
+        "result": "ok",
     })
 
 
@@ -53,8 +53,8 @@ def device_video_recommend(args):
     size = args.get('size', 10)
     videos = algorithm.get_recommend_videos(device, size)
     return jsonify({
-        "ret": ReturnCode.success,
-        "msg": "ok",
+        "code": ReturnCode.success,
+        "result": "ok",
         "data": videos,
     })
 

@@ -32,7 +32,7 @@ def before_request():
 @flask_app.errorhandler(Exception)
 def handle_exception(e):
     middleware.log_exception(e)
-    return jsonify({'ret': '-1', 'msg': 'unknown error'}), 500
+    return jsonify({'ret': -2, 'msg': 'unknown error'}), 500
 
 
 @flask_app.after_request
