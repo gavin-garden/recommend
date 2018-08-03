@@ -46,7 +46,7 @@ def device_video_behavior(args):
 @flask_app.route('/recommend/device/video/recommend', methods=['GET'])
 @parser.use_args({
     'device': fields.Str(required=True, location='query'),
-    'size': fields.Str(location='query'),
+    'size': fields.Int(location='query'),
 })
 def device_video_recommend(args):
     device = args['device']
