@@ -261,7 +261,7 @@ class VideoAlgorithmV1(object):
             recommend_videos = recommend_list
             redis_client.zrem(device_key, *recommend_videos)
 
-        return get_videos(recommend_videos)
+        return recommend_videos
 
 
 algorithm = VideoAlgorithmV1()
