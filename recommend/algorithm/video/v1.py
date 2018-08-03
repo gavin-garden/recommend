@@ -249,13 +249,14 @@ class VideoAlgorithmV1(object):
 
         # 推荐列表为空
         if not recommend_list:
-            video_ids = random.sample(self.hot_videos.keys(), size + 500)
+            video_ids = random.sample(self.hot_videos.keys(), 500)
             recommend_videos = video_ids[:size]
             zset_args = []
             for video in video_ids[size:]:
                 zset_args.append(1.0)
                 zset_args.append(video)
             redis_client.zadd(device_key, *zset_args)
+            redis_client.expire(device_key, 2592000)
         else:
             recommend_videos = recommend_list
             redis_client.zrem(device_key, *recommend_videos)

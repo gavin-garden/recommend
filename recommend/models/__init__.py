@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 """数据库连接"""
-from redis import StrictRedis
 from dogpile.cache import make_region
 from elasticsearch import Elasticsearch
 from sqlalchemy import event
