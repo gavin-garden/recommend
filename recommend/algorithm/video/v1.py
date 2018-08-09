@@ -205,7 +205,7 @@ class VideoAlgorithmV1(object):
         if not tags:
             return
 
-        video_map = self._query_videos_by_tag(tags, 100)
+        video_map = self._query_videos_by_tag(tags, 20)
         if not video_map:
             return
 
@@ -249,7 +249,7 @@ class VideoAlgorithmV1(object):
 
         # 推荐列表为空
         if not recommend_list:
-            video_ids = random.sample(self.hot_videos.keys(), 500)
+            video_ids = random.sample(self.hot_videos.keys(), 100)
             recommend_videos = video_ids[:size]
             zset_args = []
             for video in video_ids[size:]:
